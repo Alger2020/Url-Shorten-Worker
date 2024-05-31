@@ -1,13 +1,14 @@
+//参考修改https://zelikk.blogspot.com/2022/07/url-shorten-worker-hide-tutorial.html
 const config = {
   result_page: false, // After get the value from KV, if use a page to show the result.
   theme: "", // Homepage theme, use the empty value for default theme. To use urlcool theme, please fill with "theme/urlcool" .
   cors: true, // Allow Cross-origin resource sharing for API requests.
-  unique_link: false, // If it is true, the same long url will be shorten into the same short url
-  custom_link: true, // Allow users to customize the short url.
-  overwrite_kv: false, // Allow user to overwrite an existed key.
-  snapchat_mode: false, // The link will be distroyed after access.
-  visit_count: false, // Count visit times.
-  load_kv: false, // Load all from Cloudflare KV
+  unique_link: false, // 一个长链是否只有唯一的短链(会增加写入的使用量)
+  custom_link: true, // 允许自定义短链.
+  overwrite_kv: false, // 允许用户覆盖现有的密钥。
+  snapchat_mode: false, // 短链只能访问一次(访问后就删除了)
+  visit_count: true, //  使用记数(会大大增加写入的使用量, 多人共用不推荐打开)
+  load_kv: true, // 加载 Cloudflare KV 的所有内容.(自用推荐打开, 多人共用会看到别人的数据) 
   system_type: "shorturl", // shorturl, imghost, other types {pastebin, journal}
 }
 
@@ -16,16 +17,31 @@ const protect_keylist = [
   "password",
 ]
 
-let index_html = "https://crazypeace.github.io/Url-Shorten-Worker/" + config.theme + "/index.html"
-let result_html = "https://crazypeace.github.io/Url-Shorten-Worker/" + config.theme + "/result.html"
+let index_html = "https://Alger2020.github.io/Url-Shorten-Worker/" + config.theme + "/index.html"
+let result_html = "https://Alger2020.github.io/Url-Shorten-Worker/" + config.theme + "/result.html"
 
 const html404 = `<!DOCTYPE html>
   <html>
   <body>
     <h1>404 Not Found.</h1>
     <p>The url you visit is not found.</p>
-    <p> <a href="https://github.com/crazypeace/Url-Shorten-Worker/" target="_self">Fork me on GitHub</a> </p>
-  </body>
+    <!--注解掉显示地址
+    <p> <a href="https://github.com/Alger2020/Url-Shorten-Worker/" target="_self">Fork me on GitHub</a> </p>
+    -->
+    </body>
+  </html>`
+
+  //alger增加访问shorten url错误时的显示
+  const html404worker = `<!DOCTYPE html>
+  <html>
+  <body>
+    <h1>404 Not Found.</h1>
+    <p>The url you visit is not found.</p>
+    <p>正确访问方式为url.874138.xyz/password.</p>
+    <!--注解掉显示地址
+    <p> <a href="https://github.com/Alger2020/Url-Shorten-Worker/" target="_self">Fork me on GitHub</a> </p>
+    -->
+    </body>
   </html>`
 
 let response_header = {
@@ -293,12 +309,12 @@ async function handleRequest(request) {
   // console.log(path)
   // 如果path为空, 即直接访问本worker
   // If visit this worker directly (no path)
-  if (!path) {
-    return Response.redirect("https://zelikk.blogspot.com/search/label/Url-Shorten-Worker", 302)
-    /* new Response(html404, {
+  if (!path) {   
+  /*return Response.redirect("https://zelikk.blogspot.com/search/label/Url-Shorten-Worker", 302)*/
+    return new Response(html404worker, {  //如果为path显示404
       headers: response_header,
       status: 404
-    }) */
+    }) 
   }
 
   // 如果path符合password 显示操作页面index.html

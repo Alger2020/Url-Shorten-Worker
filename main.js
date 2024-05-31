@@ -30,7 +30,7 @@ function shorturl() {
   }).then(function (myJson) {
     res = myJson;
     document.getElementById("addBtn").disabled = false;
-    document.getElementById("addBtn").innerHTML = '你好';
+    document.getElementById("addBtn").innerHTML = buttonText;
 
     // 成功生成短链 Succeed
     if (res.status == "200") {
@@ -54,7 +54,7 @@ function shorturl() {
     alert("Unknow error. Please retry!");
     console.log(err);
     document.getElementById("addBtn").disabled = false;
-    document.getElementById("addBtn").innerHTML = '你好2';
+    document.getElementById("addBtn").innerHTML = buttonText;
   })
 }
 
